@@ -5,17 +5,14 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
-import aiofiles
 from aiogram import Bot, Dispatcher, F, Router
+from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.filters.callback_data import CallbackData
-
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -88,6 +85,20 @@ class AdminStates(StatesGroup):
 class UserStates(StatesGroup):
     waiting_for_photo = State()
 
+
+# ---------------------------------------
+# CallbackData yangi formatda
+# ---------------------------------------
+class ProblemCB(CallbackData, prefix="problem"):
+    action: str
+    problem_id: int
+
+
+class SubmissionCB(CallbackData, prefix="submission"):
+    action: str
+    submission_id: int
+
+
 # ---------------------------------------
 # Router va Dispatcher
 # ---------------------------------------
@@ -106,14 +117,6 @@ bot = Bot(
 )
 
 
-
-# ---------------------------------------
-# CallbackData factory
-# ---------------------------------------
-ProblemCB = CallbackData("problem", "action", "problem_id")
-SubmissionCB = CallbackData("submission", "action", "submission_id")
-
-
 # ---------------------------------------
 # /start
 # ---------------------------------------
@@ -122,6 +125,7 @@ SubmissionCB = CallbackData("submission", "action", "submission_id")
 async def start_handler(message: Message):
     user_id = message.from_user.id
     username = message.from_user.username or message.from_user.full_name
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)", (user_id, username))
@@ -143,8 +147,7 @@ async def admin_panel(message: Message):
         return
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="➕ Yangi masala yuborish", callback_data="new_problem")],
-        [InlineKeyboardButton(text="📊 Statistika", callback_data="stats")],
-        [InlineKeyboardButton(text="📂 Barcha submissionlar", callback_data="all_subs")]
+        [InlineKeyboardButton(text="📊 Statistika", callback_data="stats")]
     ])
     await message.answer("Admin panel:", reply_markup=keyboard)
 
@@ -193,9 +196,14 @@ async def receive_deadline(message: Message, state: FSMContext):
         f"<b>Kunlik masala #{problem_id}:</b>\n\n{data['problem_text']}\n\n"
         f"<i>Deadline: {deadline}</i>"
     )
-    submit_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Yechim yuborish", callback_data=f"submit_{problem_id}")]
-    ])
+    submit_keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="✅ Yechim yuborish",
+                callback_data=ProblemCB(action="submit", problem_id=problem_id).pack()
+            )]
+        ]
+    )
 
     for (user_id,) in users:
         if user_id != ADMIN_ID:
@@ -211,10 +219,9 @@ async def receive_deadline(message: Message, state: FSMContext):
 # ---------------------------------------
 # User submit
 # ---------------------------------------
-@user_router.callback_query(F.data.startswith("submit_"))
-async def user_submit_start(callback: CallbackQuery, state: FSMContext):
-    _, problem_id = callback.data.split("_")
-    await state.update_data(problem_id=int(problem_id))
+@user_router.callback_query(ProblemCB.filter(F.action == "submit"))
+async def user_submit_start(callback: CallbackQuery, callback_data: ProblemCB, state: FSMContext):
+    await state.update_data(problem_id=callback_data.problem_id)
     await callback.message.edit_text("📸 Yechimingiz rasmini yuboring:")
     await state.set_state(UserStates.waiting_for_photo)
 
@@ -246,21 +253,30 @@ async def receive_photo(message: Message, state: FSMContext):
     photo_to_send = FSInputFile(file_path)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Ishladi", callback_data=f"approve_{submission_id}"),
-            InlineKeyboardButton(text="❌ Ishlamadi", callback_data=f"reject_{submission_id}")
+            InlineKeyboardButton(
+                text="✅ Ishladi",
+                callback_data=SubmissionCB(action="approve", submission_id=submission_id).pack()
+            ),
+            InlineKeyboardButton(
+                text="❌ Ishlamadi",
+                callback_data=SubmissionCB(action="reject", submission_id=submission_id).pack()
+            )
         ]
     ])
-    await bot.send_photo(ADMIN_ID, photo_to_send,
-                         caption=f"Submission #{submission_id}\nUser: {message.from_user.id}\nProblem #{problem_id}",
-                         reply_markup=keyboard)
+    await bot.send_photo(
+        ADMIN_ID,
+        photo_to_send,
+        caption=f"Submission #{submission_id}\nUser: {message.from_user.id}\nProblem #{problem_id}",
+        reply_markup=keyboard
+    )
 
 
 # ---------------------------------------
 # Admin review
 # ---------------------------------------
-@admin_router.callback_query(F.data.startswith("approve_"))
-async def approve_submission(callback: CallbackQuery):
-    submission_id = int(callback.data.split("_")[1])
+@admin_router.callback_query(SubmissionCB.filter(F.action == "approve"))
+async def approve_submission(callback: CallbackQuery, callback_data: SubmissionCB):
+    submission_id = callback_data.submission_id
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("UPDATE submissions SET status='approved', reviewed_at=CURRENT_TIMESTAMP WHERE id=?", (submission_id,))
@@ -273,9 +289,9 @@ async def approve_submission(callback: CallbackQuery):
     await bot.send_message(user_id, "🎉 Sizning yechimingiz tasdiqlandi! ✅")
 
 
-@admin_router.callback_query(F.data.startswith("reject_"))
-async def reject_submission(callback: CallbackQuery):
-    submission_id = int(callback.data.split("_")[1])
+@admin_router.callback_query(SubmissionCB.filter(F.action == "reject"))
+async def reject_submission(callback: CallbackQuery, callback_data: SubmissionCB):
+    submission_id = callback_data.submission_id
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("UPDATE submissions SET status='rejected', reviewed_at=CURRENT_TIMESTAMP WHERE id=?", (submission_id,))

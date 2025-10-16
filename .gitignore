@@ -1,0 +1,12 @@
+.env
+bot.db
+*.pyc
+__pycache__/
+venv/
+.env
+.DS_Store
+.idea/
+.vscode/
+logs/
+submissions/
+image.png
