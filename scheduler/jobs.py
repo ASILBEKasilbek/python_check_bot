@@ -7,7 +7,7 @@ from callbacks.callbacks import ProblemCB
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from zoneinfo import ZoneInfo
-
+import os
 bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(

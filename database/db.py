@@ -1,8 +1,12 @@
 import sqlite3
-from config.settings import DB_PATH
+import os
+from config.settings import DB_PATH, SUBMISSIONS_DIR
 
 def init_db():
     try:
+        # Ensure submissions directory exists
+        os.makedirs(SUBMISSIONS_DIR, exist_ok=True)
+        
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
