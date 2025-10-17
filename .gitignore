@@ -10,3 +10,4 @@ venv/
 logs/
 submissions/
 image.png
+*.db
