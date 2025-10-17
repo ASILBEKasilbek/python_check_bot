@@ -26,8 +26,8 @@ async def main():
     
     # Include routers
     dp.include_router(common_router)
-    dp.include_router(admin_router)
     dp.include_router(user_router)
+    dp.include_router(admin_router)
     
     # Setup scheduler
     scheduler = AsyncIOScheduler(timezone=TIMEZONE)

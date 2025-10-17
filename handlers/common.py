@@ -33,13 +33,13 @@ def get_translations():
         "menu": "📋 Asosiy menyu:",
         "coins": "💰 Sizning tangalaringiz: {coins}",
         "history_empty": "📜 Hozircha masalalar yo‘q.",
-        "history": "<b>Oxirgi masalalar:</b>\n\n",
-        "leaderboard": "<b>🏆 Eng yaxshi foydalanuvchilar:</b>\n\n",
-        "progress": "<b>📈 Sizning yutuqlaringiz:</b>\n\n",
+        "history": "Oxirgi masalalar:\n\n",
+        "leaderboard": "🏆 Eng yaxshi foydalanuvchilar:\n\n",
+        "progress": "📈 Sizning yutuqlaringiz:\n\n",
         "error": "⚠️ Xatolik yuz berdi, qayta urinib ko‘ring.",
-        "panel": "<b>🎮 Foydalanuvchi paneli:</b>\n\n",
+        "panel": "🎮 Foydalanuvchi paneli:\n\n",
         "today_tasks": "📅 Bugungi masalalar:\n",
-        "all_tasks": "<b>📚 Barcha masalalar:</b>\n\n",
+        "all_tasks": "📚 Barcha masalalar:\n\n",
         "task_status_pending": "⏳ Kutmoqda",
         "task_status_submitted": "📤 Yuborilgan",
         "task_status_approved": "✅ Tasdiqlangan",
@@ -551,9 +551,9 @@ async def view_task(callback: CallbackQuery, callback_data: TaskCB):
         text, image_path, diff, cat, deadline, status = task
         status_text = translations[f"task_status_{status or ('missed' if datetime.strptime(deadline, '%Y-%m-%d %H:%M:%S').replace(tzinfo=TIMEZONE) < datetime.now(TIMEZONE) else 'pending')}"]
         message_text = (
-            f"<b>📘 Masala #{problem_id} ({cat} - {diff}):</b>\n\n"
+            f"📘 Masala #{problem_id} ({cat} - {diff}):\n\n"
             f"{text}\n\n<i>Deadline: {deadline}</i>\n"
-            f"<b>Status: {status_text}</b>"
+            f"Status: {status_text}"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🔙 Orqaga", callback_data=TaskCB(action="panel", problem_id=0).pack())]

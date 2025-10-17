@@ -18,11 +18,11 @@ bot = Bot(
 
 def get_translations():
     return {
-        "task_notification": "<b>📘 Kunlik masala #{id} ({category} - {difficulty}):</b>\n\n{text}\n\n"
-                           "<i>Deadline: {deadline}</i>\n"
+        "task_notification": "📘 Kunlik masala #{id} ({category} - {difficulty}):\n\n{text}\n\n"
+                           "Deadline: {deadline}\n"
                            "🎁 To‘g‘ri yechim uchun {coins} tanga!",
         "reminder": "⏰ Masala #{id} ({category} - {difficulty}) uchun 1 soat qoldi!\n"
-                   "Tezroq yechim yuboring: {text}\n<i>Deadline: {deadline}</i>",
+                   "Tezroq yechim yuboring: {text}\nDeadline: {deadline}",
         "penalty": "⚠️ Masala #{id} topshirmadingiz! {penalty} tanga ayirildi.\n💰 Joriy balans: {coins}"
     }
 

@@ -97,17 +97,24 @@ async def receive_problem_text(message: Message, state: FSMContext):
     await state.set_state(AdminStates.waiting_for_problem_image)
     logger.info(f"Admin {message.from_user.id} submitted problem text")
 
+@admin_router.message(F.text == "/checkstate")
+async def check_state(message: Message, state: FSMContext):
+    s = await state.get_state()
+    await message.answer(f"Sening state: {s}")
+
 @admin_router.message(or_f(AdminStates.waiting_for_problem_image, F.photo, F.document, F.text == "/skip"))
 async def receive_problem_image(message: Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
     translations = get_translations()
     image_path = None
 
     if message.text and message.text.strip() == "/skip":
         await state.update_data(image_path=None)
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="Oson", callback_data="difficulty_easy"),
-             InlineKeyboardButton(text="O‘rta", callback_data="difficulty_medium"),
-             InlineKeyboardButton(text="Qiyin", callback_data="difficulty_hard")]
+            [InlineKeyboardButton(text="Oson(5 tanga)", callback_data="difficulty_easy"),
+             InlineKeyboardButton(text="O‘rta(10 tanga)", callback_data="difficulty_medium"),
+             InlineKeyboardButton(text="Qiyin(15 tanga)", callback_data="difficulty_hard")]
         ])
         await message.answer(translations["select_difficulty"], reply_markup=keyboard, protect_content=True)
         await state.set_state(AdminStates.waiting_for_difficulty)
@@ -164,9 +171,9 @@ async def receive_problem_image(message: Message, state: FSMContext):
 
     await state.update_data(image_path=image_path)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Oson", callback_data="difficulty_easy"),
-         InlineKeyboardButton(text="O‘rta", callback_data="difficulty_medium"),
-         InlineKeyboardButton(text="Qiyin", callback_data="difficulty_hard")]
+            [InlineKeyboardButton(text="Oson(5 tanga)", callback_data="difficulty_easy"),
+             InlineKeyboardButton(text="O‘rta(10 tanga)", callback_data="difficulty_medium"),
+             InlineKeyboardButton(text="Qiyin(15 tanga)", callback_data="difficulty_hard")]
     ])
     await message.answer(translations["select_difficulty"], reply_markup=keyboard, protect_content=True)
     await state.set_state(AdminStates.waiting_for_difficulty)
