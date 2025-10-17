@@ -8,8 +8,8 @@ load_dotenv()
 
 # Basic configuration
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-# ADMIN_ID = 6182449219
-ADMIN_ID = 5306481482  # o'zingizning ID'ingiz
+ADMIN_ID = 6182449219
+# ADMIN_ID = 5306481482  # o'zingizning ID'ingiz
 SUBMISSIONS_DIR = Path("submissions")
 SUBMISSIONS_DIR.mkdir(exist_ok=True)
 DB_PATH = "bot5.db"
