@@ -432,42 +432,55 @@ async def show_panel(callback: CallbackQuery):
 @common_router.callback_query(TaskCB.filter(F.action == "today_tasks"))
 async def show_today_tasks(callback: CallbackQuery):
     user_id = callback.from_user.id
-    today = datetime.now(TIMEZONE).date()
+    now = datetime.now(TIMEZONE)
+
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+
+        # Faqat deadline hali tugamagan masalalarni olish
         cursor.execute("""
             SELECT p.id, p.text, p.difficulty, p.category, p.deadline, s.status
             FROM problems p
             LEFT JOIN submissions s ON p.id = s.problem_id AND s.user_id=?
-            WHERE date(p.scheduled_at) = ?
-        """, (user_id, today.strftime("%Y-%m-%d")))
+            WHERE p.deadline > ?
+            ORDER BY p.scheduled_at ASC
+        """, (user_id, now.strftime("%Y-%m-%d %H:%M:%S")))
+
         tasks = cursor.fetchall()
         conn.close()
 
         translations = get_translations()
+
         if not tasks:
             await callback.message.edit_text(
-                translations["history_empty"],
+                "📭 Bugungi faol masalalar yo‘q (deadline tugagan yoki hali boshlanmagan).",
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                     [InlineKeyboardButton(text="🔙 Orqaga", callback_data=TaskCB(action="panel", problem_id=0).pack())]
                 ]),
                 protect_content=True
             )
-            logger.info(f"User {user_id} viewed today tasks: no tasks found")
+            logger.info(f"User {user_id} — no active tasks found.")
             return
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
-                text=f"📘 Masala #{pid} ({cat} - {diff})",
+                text=f"#{pid} Tugash vaqti({deadline})",
                 callback_data=TaskCB(action="view_task", problem_id=pid).pack()
-            )] for pid, _, diff, cat, _, _ in tasks
+            )] for pid, _, diff, cat, deadline, _ in tasks
         ] + [[InlineKeyboardButton(text="🔙 Orqaga", callback_data=TaskCB(action="panel", problem_id=0).pack())]])
-        await callback.message.edit_text(translations["today_tasks"], reply_markup=keyboard, protect_content=True)
-        logger.info(f"User {user_id} viewed today tasks")
+
+        await callback.message.edit_text(
+            "📅 Hali tugamagan bugungi masalalar:",
+            reply_markup=keyboard,
+            protect_content=True
+        )
+
+        logger.info(f"User {user_id} viewed active tasks: {len(tasks)} found")
+
     except sqlite3.Error as e:
         await callback.message.edit_text(
-            get_translations()["error"],
+            "❌ Ma'lumotlar bazasida xatolik yuz berdi.",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="🔙 Orqaga", callback_data=TaskCB(action="panel", problem_id=0).pack())]
             ]),
