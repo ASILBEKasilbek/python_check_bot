@@ -7,7 +7,7 @@ from aiogram import Router, Bot, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, or_f
-from config.settings import DB_PATH, ADMIN_ID, BOT_TOKEN, TIMEZONE, COINS_PER_DIFFICULTY, COIN_PENALTY, SUBMISSIONS_DIR
+from config.settings import DB_PATH, ADMIN_IDS, BOT_TOKEN, TIMEZONE, COINS_PER_DIFFICULTY, COIN_PENALTY, SUBMISSIONS_DIR
 from states.states import AdminStates, UserStates
 from callbacks.callbacks import ProblemCB, SubmissionCB, TaskCB
 from aiogram.client.default import DefaultBotProperties
@@ -54,7 +54,7 @@ def get_translations():
 
 @admin_router.message(Command("admin"))
 async def admin_panel(message: Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("🚫 Faqat adminlar uchun!", protect_content=True)
         logger.warning(f"Non-admin user {message.from_user.id} attempted to access admin panel")
         return
@@ -104,7 +104,7 @@ async def check_state(message: Message, state: FSMContext):
 
 @admin_router.message(or_f(AdminStates.waiting_for_problem_image, F.photo, F.document, F.text == "/skip"))
 async def receive_problem_image(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         return
     translations = get_translations()
     image_path = None
