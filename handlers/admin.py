@@ -252,7 +252,7 @@ async def receive_category(callback: CallbackQuery, state: FSMContext):
                     try:
                         message_text = (
                             f"📘 Masala #{problem_id} ({data['category']} - {data['difficulty']}):\n\n"
-                            f"{data['problem_text']}\n\n<i>Deadline: {deadline}</i>\n"
+                            f"{data['problem_text']}\n\n<i>Deadline: {deadline}\n"
                             f"🎁 To‘g‘ri yechim uchun {coins} tanga!"
                         )
                         if data.get('image_path') and os.path.exists(data['image_path']):

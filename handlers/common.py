@@ -252,7 +252,7 @@ async def show_history(callback: CallbackQuery):
 
         text = translations["history"]
         for pid, ptext, diff, cat, deadline in problems:
-            text += f"📘 Masala #{pid} ({cat} - {diff})\n{ptext}\n<i>Deadline: {deadline}</i>\n\n"
+            text += f"📘 Masala #{pid} ({cat} - {diff})\n{ptext}\nDeadline: {deadline}n\n"
         await callback.message.edit_text(
             text,
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
@@ -393,15 +393,15 @@ async def show_panel(callback: CallbackQuery):
             for pid, ptext, diff, cat, deadline, status in today_tasks:
                 status_text = translations[f"task_status_{status or 'pending'}"]
                 text += f"📘 Masala #{pid} ({cat} - {diff}): {status_text}\n"
-                text += f"<i>{ptext[:50]}...</i>\n"
-                text += f"<i>Deadline: {deadline}</i>\n\n"
+                text += f"{ptext[:50]}...n"
+                text += f"Deadline: {deadline}n\n"
         
         # All tasks
         text += translations["all_tasks"]
         for pid, ptext, diff, cat, deadline, status in all_tasks:
             status_text = translations[f"task_status_{status or ('missed' if datetime.strptime(deadline, '%Y-%m-%d %H:%M:%S').replace(tzinfo=TIMEZONE) < datetime.now(TIMEZONE) else 'pending')}"]
             text += f"📘 Masala #{pid} ({cat} - {diff}): {status_text}\n"
-            text += f"<i>{ptext[:50]}...</i>\n\n"
+            text += f"{ptext[:50]}...n\n"
         
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
@@ -517,9 +517,9 @@ async def show_all_tasks(callback: CallbackQuery):
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
-                text=f"📘 Masala #{pid} ({cat} - {diff})",
+                text=f"#{pid} Tugash vaqti({deadline})",
                 callback_data=TaskCB(action="view_task", problem_id=pid).pack()
-            )] for pid, _, diff, cat, _, _ in tasks
+            )] for pid, _, diff, cat, deadline, _ in tasks
         ] + [[InlineKeyboardButton(text="🔙 Orqaga", callback_data=TaskCB(action="panel", problem_id=0).pack())]])
         await callback.message.edit_text(translations["all_tasks"], reply_markup=keyboard, protect_content=True)
         logger.info(f"User {user_id} viewed all tasks")
@@ -565,7 +565,7 @@ async def view_task(callback: CallbackQuery, callback_data: TaskCB):
         status_text = translations[f"task_status_{status or ('missed' if datetime.strptime(deadline, '%Y-%m-%d %H:%M:%S').replace(tzinfo=TIMEZONE) < datetime.now(TIMEZONE) else 'pending')}"]
         message_text = (
             f"📘 Masala #{problem_id} ({cat} - {diff}):\n\n"
-            f"{text}\n\n<i>Deadline: {deadline}</i>\n"
+            f"{text}\n\nDeadline: {deadline}n"
             f"Status: {status_text}"
         )
         keyboard = InlineKeyboardMarkup(inline_keyboard=[

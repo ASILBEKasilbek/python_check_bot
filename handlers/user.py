@@ -213,7 +213,7 @@ async def show_category_tasks(callback: CallbackQuery, callback_data: CategoryCB
 
     text = translations["history"]
     for pid, ptext, diff, deadline in problems:
-        text += f"📘 Masala #{pid} ({category} - {diff})\n{ptext}\n<i>Deadline: {deadline}</i>\n\n"
+        text += f"📘 Masala #{pid} ({category} - {diff})\n{ptext}\n<i>Deadline: {deadline}\n\n"
 
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
